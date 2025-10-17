@@ -1,144 +1,42 @@
 // --- CẤU HÌNH BAN ĐẦU ---
 let data = {
     classes: ['10A1', '10A2', '10A3', '10A4', '10A5', '10A6', '11A1', '11A2', '11A3', '11A4', '11A5', '11A6', '12A1', '12A2', '12A3', '12A4', '12A5', '12A6'],
-    users: { 'admin': { password: 'adminpass', email: 'admin@system.com' } }, // Thêm trường email
-    loggedInUser: null,
     logs: [],
     lastWeekLogs: [],
     mvpLastWeek: null,
-    resetCodes: {}, // MỚI: Lưu trữ mã reset tạm thời {class: {code: '123456', expires: timestamp}}
 };
-let currentAuthMode = 'login'; 
 
 // --- KHỞI TẠO VÀ LƯU DỮ LIỆU ---
 
 function initializeApp() {
-    // 1. Tải dữ liệu từ localStorage
+    // Tải dữ liệu từ localStorage
     const storedLogs = localStorage.getItem('ecoRaceLogs');
     if (storedLogs) data.logs = JSON.parse(storedLogs);
     
     const storedLastWeekLogs = localStorage.getItem('ecoRaceLastWeekLogs');
     if (storedLastWeekLogs) data.lastWeekLogs = JSON.parse(storedLastWeekLogs);
-
-    const storedUsers = localStorage.getItem('ecoRaceUsers');
-    if (storedUsers) {
-        data.users = JSON.parse(storedUsers);
-        // Đảm bảo tài khoản admin luôn tồn tại sau khi load
-        if (!data.users['admin']) {
-            data.users['admin'] = { password: 'adminpass', email: 'admin@system.com' };
-            localStorage.setItem('ecoRaceUsers', JSON.stringify(data.users));
-        }
-    }
     
     const storedMVP = localStorage.getItem('ecoRaceMVP');
     if (storedMVP) data.mvpLastWeek = JSON.parse(storedMVP);
-    
-    // Xóa mã reset hết hạn (mô phỏng)
-    cleanupExpiredCodes();
 
-    const loggedInUser = localStorage.getItem('loggedInUser');
-    if (loggedInUser) {
-        data.loggedInUser = loggedInUser;
-        updateAuthDisplay(loggedInUser);
-        switchView('dashboard-view');
-    } else {
-        updateAuthDisplay(null);
-        switchView('auth-view');
-    }
-    
-    // 2. Chạy kiểm tra reset hàng tuần
+    // Chạy kiểm tra reset hàng tuần
     checkWeeklyReset();
 
-    // 3. Set ngày mặc định và cập nhật UI admin
+    // Set ngày mặc định và cập nhật UI
     document.getElementById('log-date').valueAsDate = new Date();
     updateDashboard();
-    updateAdminPanelUI();
+    
+    // Hiển thị view mặc định
+    switchView('input-view');
 }
 
 function saveData() {
     localStorage.setItem('ecoRaceLogs', JSON.stringify(data.logs));
-    localStorage.setItem('ecoRaceUsers', JSON.stringify(data.users));
     localStorage.setItem('ecoRaceMVP', JSON.stringify(data.mvpLastWeek));
     localStorage.setItem('ecoRaceLastWeekLogs', JSON.stringify(data.lastWeekLogs));
 }
 
-// --- CHỨC NĂNG ADMIN & RESET MẬT KHẨU (MÔ PHỎNG EMAIL) ---
-
-function cleanupExpiredCodes() {
-    const now = new Date().getTime();
-    for (const cls in data.resetCodes) {
-        if (data.resetCodes[cls].expires < now) {
-            delete data.resetCodes[cls];
-        }
-    }
-}
-
-function generateResetCode() {
-    if (data.loggedInUser !== 'admin') {
-        showModal('❌ Từ chối', 'Bạn không có quyền quản trị.', 'warning');
-        return;
-    }
-    
-    const classToReset = document.getElementById('reset-class-select').value;
-    if (!classToReset || !data.users[classToReset]) {
-        showModal('⚠️ Lỗi', 'Vui lòng chọn một lớp hợp lệ.', 'warning');
-        return;
-    }
-
-    const classEmail = data.users[classToReset].email;
-    if (!classEmail) {
-        showModal('⚠️ Cảnh báo', `Lớp ${classToReset} chưa có email bảo mật. Vui lòng yêu cầu lớp cập nhật hoặc reset mật khẩu thủ công.`, 'warning');
-        return;
-    }
-
-    // MÔ PHỎNG: Tạo mã ngẫu nhiên 6 chữ số
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date().getTime() + 10 * 60 * 1000; // Hết hạn sau 10 phút
-
-    data.resetCodes[classToReset] = { code, expires };
-    
-    // Cập nhật UI admin
-    document.getElementById('admin-reset-code-display').textContent = code;
-
-    // Ghi chú: Ở hệ thống thật, mã này sẽ được gửi đi!
-    showModal('✅ Mã đã tạo', 
-              `Đã tạo mã reset cho lớp ${classToReset}. Mã này là **${code}** và có hiệu lực 10 phút. 
-              Admin cần gửi mã này thủ công cho lớp qua email (${classEmail}) hoặc kênh khác.`, 
-              'success');
-    updateAdminPanelUI();
-}
-
-function handlePasswordReset() {
-    const classVal = document.getElementById('reset-class-select-user').value;
-    const code = document.getElementById('reset-code').value.trim();
-    const newPass = document.getElementById('reset-new-password').value;
-
-    if (!classVal || !code || !newPass) {
-        showModal('⚠️ Lỗi', 'Vui lòng nhập đầy đủ Tên Lớp, Mã và Mật khẩu mới.', 'warning');
-        return;
-    }
-    if (newPass.length < 4) {
-        showModal('⚠️ Cảnh báo', 'Mật khẩu mới phải có ít nhất 4 ký tự.', 'warning');
-        return;
-    }
-    
-    cleanupExpiredCodes(); // Dọn dẹp mã hết hạn
-
-    if (!data.resetCodes[classVal] || data.resetCodes[classVal].code !== code) {
-        showModal('❌ Lỗi', 'Mã xác nhận không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ Admin để cấp lại.', 'warning');
-        return;
-    }
-
-    // Thành công: Cập nhật mật khẩu
-    data.users[classVal].password = newPass;
-    delete data.resetCodes[classVal]; // Xóa mã đã dùng
-    saveData();
-
-    showModal('✅ Thành công', `Mật khẩu của lớp ${classVal} đã được đặt lại! Vui lòng Đăng nhập.`, 'success');
-    switchView('auth-view');
-}
-
-// ... (Các hàm checkWeeklyReset, calculateMVP, resetData giữ nguyên) ...
+// --- RESET HÀNG TUẦN ---
 
 function checkWeeklyReset() {
     const lastResetDate = localStorage.getItem('lastResetDate');
@@ -191,254 +89,6 @@ function calculateMVP(logs) {
     return null;
 }
 
-function resetData(type) {
-    if (data.loggedInUser !== 'admin') {
-        showModal('❌ Từ chối', 'Bạn không có quyền quản trị.', 'warning');
-        return;
-    }
-
-    if (type === 'weekly') {
-        if (!confirm("Bạn có chắc chắn muốn RESET điểm tuần thủ công? Dữ liệu hiện tại sẽ chuyển thành lịch sử tuần trước.")) return;
-        
-        const currentMVP = calculateMVP(data.logs);
-        if (currentMVP) {
-            data.mvpLastWeek = currentMVP;
-            localStorage.setItem('ecoRaceMVP', JSON.stringify(data.mvpLastWeek));
-        }
-        data.lastWeekLogs = data.logs;
-        data.logs = [];
-        localStorage.setItem('lastResetDate', new Date().toISOString());
-        
-        saveData();
-        showModal('✅ Thành công', 'Đã reset dữ liệu tuần và cập nhật MVP tuần trước!', 'success');
-    } else if (type === 'all') {
-        if (!confirm("🚨 CẢNH BÁO: Bạn có chắc chắn muốn XÓA SẠCH TẤT CẢ dữ liệu (logs, MVP, lịch sử logs) không? Hành động này không thể hoàn tác.")) return;
-        
-        data.logs = [];
-        data.lastWeekLogs = [];
-        data.mvpLastWeek = null;
-        localStorage.setItem('lastResetDate', new Date().toISOString());
-        
-        const adminUser = data.users['admin'];
-        data.users = {};
-        data.users['admin'] = adminUser;
-        
-        saveData();
-        showModal('✅ Thành công', 'Đã xóa sạch TẤT CẢ dữ liệu. Hệ thống đã trở về trạng thái ban đầu.', 'success');
-    }
-    updateAdminPanelUI();
-    updateDashboard();
-}
-
-function updateAdminPanelUI() {
-    if (document.getElementById('admin-view').classList.contains('hidden')) return;
-
-    document.getElementById('admin-log-count').textContent = data.logs.length.toLocaleString();
-    let userCount = Object.keys(data.users).length;
-    if (data.users['admin']) userCount--;
-    document.getElementById('admin-user-count').textContent = userCount.toLocaleString();
-
-    const mvpLastWeekDisplay = data.mvpLastWeek 
-        ? `${data.mvpLastWeek.class} - ${data.mvpLastWeek.total.toLocaleString()} điểm` 
-        : 'Chưa có';
-    document.getElementById('mvp-last-week-display').textContent = mvpLastWeekDisplay;
-    
-    // Cập nhật lớp để reset
-    const resetSelect = document.getElementById('reset-class-select');
-    resetSelect.innerHTML = '<option value="" disabled selected>Chọn lớp</option>';
-    data.classes.filter(cls => data.users[cls]).forEach(cls => {
-        const option = document.createElement('option');
-        option.value = cls;
-        option.textContent = cls + (data.users[cls].email ? ' (📧)' : ' (❌ Email)');
-        resetSelect.appendChild(option);
-    });
-    
-    // Hiển thị mã reset hiện tại (nếu có)
-    const selectedClass = resetSelect.value;
-    const currentCode = selectedClass && data.resetCodes[selectedClass] && data.resetCodes[selectedClass].expires > new Date().getTime()
-        ? data.resetCodes[selectedClass].code
-        : 'N/A';
-    document.getElementById('admin-reset-code-display').textContent = currentCode;
-}
-
-
-// --- CHỨC NĂNG ĐĂNG KÝ/ĐĂNG NHẬP (AUTHENTICATION) ---
-
-function updateAuthDisplay(user) {
-    const loggedInUserSpan = document.getElementById('logged-in-user');
-    const logoutBtn = document.getElementById('logout-btn');
-    const authTabBtn = document.querySelector('.tab-btn[onclick*="auth-view"]');
-    const inputTabBtn = document.getElementById('input-tab-btn');
-    const adminTabBtn = document.getElementById('admin-tab-btn');
-
-    if (user) {
-        loggedInUserSpan.textContent = `Đang đăng nhập: ${user}`;
-        loggedInUserSpan.classList.remove('hidden');
-        logoutBtn.classList.remove('hidden');
-        
-        // Cập nhật: Khi đã đăng nhập, tab "Đăng Nhập" trở thành "Trang Cá Nhân"
-        authTabBtn.textContent = (user === 'admin') ? '🏠 Trang Admin' : '👤 Trang Cá Nhân';
-        authTabBtn.setAttribute('onclick', `checkAuthAndSwitchView('${user === 'admin' ? 'admin-view' : 'profile-view'}')`);
-
-
-        inputTabBtn.classList.remove('hidden');
-        document.getElementById('class-display').value = user;
-
-        if (user === 'admin') {
-            adminTabBtn.classList.remove('hidden');
-            inputTabBtn.classList.add('hidden'); 
-        } else {
-            adminTabBtn.classList.add('hidden');
-            inputTabBtn.classList.remove('hidden');
-        }
-    } else {
-        loggedInUserSpan.classList.add('hidden');
-        logoutBtn.classList.add('hidden');
-        authTabBtn.textContent = '🔑 1. Đăng Nhập';
-        authTabBtn.setAttribute('onclick', `switchView('auth-view')`);
-        inputTabBtn.classList.add('hidden');
-        adminTabBtn.classList.add('hidden');
-    }
-}
-
-function toggleAuthMode() {
-    const title = document.getElementById('auth-title');
-    const submitBtn = document.getElementById('auth-submit-btn');
-    const toggleText = document.getElementById('auth-toggle-text');
-    const classSelect = document.getElementById('login-class-select');
-    
-    if (currentAuthMode === 'login') {
-        currentAuthMode = 'register';
-        title.textContent = 'Đăng Ký Tài Khoản Lớp';
-        submitBtn.textContent = 'ĐĂNG KÝ TÀI KHOẢN';
-        toggleText.innerHTML = 'Đã có tài khoản? **Đăng Nhập** tại đây.';
-        classSelect.querySelector('option[value="admin"]').style.display = 'none';
-        document.getElementById('forgot-pass-section').classList.add('hidden');
-    } else {
-        currentAuthMode = 'login';
-        title.textContent = 'Đăng Nhập Hệ Thống';
-        submitBtn.textContent = 'ĐĂNG NHẬP';
-        toggleText.innerHTML = 'Chưa có tài khoản lớp? **Đăng Ký** tại đây.';
-        classSelect.querySelector('option[value="admin"]').style.display = 'block';
-        document.getElementById('forgot-pass-section').classList.remove('hidden');
-    }
-}
-
-function processAuth() {
-    const classVal = document.getElementById('login-class-select').value;
-    const password = document.getElementById('login-password').value;
-    
-    if (!password || password.length < 4) {
-        showModal('⚠️ Lỗi', 'Mật khẩu phải có ít nhất 4 ký tự.', 'warning');
-        return;
-    }
-    
-    if (currentAuthMode === 'register' && classVal !== 'admin') {
-        register(classVal, password);
-    } else if (currentAuthMode === 'register' && classVal === 'admin') {
-        showModal('⚠️ Lỗi', 'Không thể đăng ký tài khoản admin.', 'warning');
-    } else {
-        login(classVal, password);
-    }
-}
-
-function register(classVal, password) {
-    if (data.users[classVal]) {
-        showModal('⚠️ Lỗi', `Lớp ${classVal} đã có tài khoản. Vui lòng Đăng nhập.`, 'warning');
-        return;
-    }
-    
-    // Thêm trường email mặc định
-    data.users[classVal] = { password: password, email: '' }; 
-    saveData();
-    showModal('✅ Đăng Ký Thành Công!', `Lớp ${classVal} đã đăng ký thành công. Vui lòng Đăng nhập.`, 'success');
-    
-    toggleAuthMode();
-}
-
-function login(classVal, password) {
-    if (data.users[classVal] && data.users[classVal].password === password) {
-        data.loggedInUser = classVal;
-        localStorage.setItem('loggedInUser', classVal);
-        
-        showModal('🎉 Đăng Nhập Thành Công!', `Chào mừng ${classVal === 'admin' ? 'Quản trị viên' : 'lớp ' + classVal}!`, 'success');
-        updateAuthDisplay(classVal);
-        
-        switchView(classVal === 'admin' ? 'admin-view' : 'input-view');
-    } else {
-        showModal('❌ Lỗi Đăng Nhập', 'Tên lớp/admin hoặc Mật khẩu không đúng.', 'warning');
-    }
-}
-
-function logout() {
-    data.loggedInUser = null;
-    localStorage.removeItem('loggedInUser');
-    updateAuthDisplay(null);
-    switchView('auth-view');
-    showModal('👋 Đã Đăng Xuất', 'Bạn đã đăng xuất khỏi hệ thống.', 'success');
-}
-
-function checkAuthAndSwitchView(viewId) {
-    if (!data.loggedInUser) {
-        showModal('⛔ Yêu Cầu Đăng Nhập', 'Bạn cần đăng nhập để truy cập tính năng này.', 'warning');
-        switchView('auth-view');
-        return;
-    }
-    if (viewId === 'admin-view' && data.loggedInUser !== 'admin') {
-        showModal('⛔ Yêu Cầu Admin', 'Chỉ Quản trị viên mới được truy cập Bảng điều khiển Admin.', 'warning');
-        return;
-    }
-    switchView(viewId);
-    if (viewId === 'admin-view') updateAdminPanelUI();
-}
-
-function updateProfile(type) {
-    const user = data.loggedInUser;
-    if (!user || user === 'admin') {
-        showModal('❌ Lỗi', 'Chỉ người dùng lớp mới có thể thay đổi thông tin cá nhân.', 'warning');
-        return;
-    }
-    
-    if (type === 'email') {
-        const newEmail = document.getElementById('profile-email-input').value.trim();
-        if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
-            showModal('⚠️ Lỗi', 'Vui lòng nhập định dạng email hợp lệ.', 'warning');
-            return;
-        }
-        
-        data.users[user].email = newEmail;
-        saveData();
-        showModal('✅ Thành công', `Email bảo mật của lớp ${user} đã được cập nhật thành công!`, 'success');
-        
-    } else if (type === 'password') {
-        const oldPass = document.getElementById('profile-old-password').value;
-        const newPass = document.getElementById('profile-new-password').value;
-        const confirmPass = document.getElementById('profile-confirm-password').value;
-
-        if (data.users[user].password !== oldPass) {
-            showModal('❌ Lỗi', 'Mật khẩu cũ không chính xác.', 'warning');
-            return;
-        }
-
-        if (newPass.length < 4) {
-            showModal('⚠️ Cảnh báo', 'Mật khẩu mới phải có ít nhất 4 ký tự.', 'warning');
-            return;
-        }
-
-        if (newPass !== confirmPass) {
-            showModal('❌ Lỗi', 'Mật khẩu mới và xác nhận mật khẩu không khớp.', 'warning');
-            return;
-        }
-        
-        data.users[user].password = newPass;
-        saveData();
-        showModal('✅ Thành công', `Mật khẩu của lớp ${user} đã được đổi thành công! Vui lòng đăng nhập lại.`, 'success');
-        
-        logout(); 
-    }
-}
-
-
 // --- LOGIC ỨNG DỤNG CHÍNH ---
 
 function switchView(viewId) {
@@ -451,20 +101,6 @@ function switchView(viewId) {
     });
     
     let activeBtn = document.querySelector(`.tab-btn[onclick*="'${viewId}'"]`);
-    
-    if (viewId === 'profile-view') {
-        activeBtn = document.querySelector(`.tab-btn[onclick*="'profile-view'"]`);
-        if (data.loggedInUser && data.users[data.loggedInUser]) {
-             document.getElementById('profile-email-input').value = data.users[data.loggedInUser].email || '';
-             // Reset form đổi mật khẩu
-             document.getElementById('profile-old-password').value = '';
-             document.getElementById('profile-new-password').value = '';
-             document.getElementById('profile-confirm-password').value = '';
-        }
-    }
-    if (viewId === 'admin-view') {
-        activeBtn = document.querySelector(`.tab-btn[onclick*="'admin-view'"]`);
-    }
 
     if(activeBtn) {
         activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
@@ -479,9 +115,10 @@ function switchView(viewId) {
 }
 
 function logRecycling() {
-    const classVal = data.loggedInUser;
-    if (!classVal || classVal === 'admin') {
-        showModal('⛔ Lỗi', 'Vui lòng đăng nhập bằng tài khoản Lớp để ghi nhận dữ liệu.', 'warning');
+    const classVal = document.getElementById('class-select').value;
+    
+    if (!classVal) {
+        showModal('⚠️ Lỗi', 'Vui lòng chọn lớp trước khi ghi nhận dữ liệu.', 'warning');
         return;
     }
     
@@ -546,13 +183,11 @@ function logRecycling() {
     document.getElementById('log-date').valueAsDate = new Date();
     document.getElementById('bottle-volume').value = 500;
     document.getElementById('can-volume').value = 330;
-    document.getElementById('class-display').value = classVal;
 }
 
-// ... (Các hàm showModal, closeModal, launchFireworks giữ nguyên) ...
 function showModal(title, message, type) {
     document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-message').innerHTML = message; // Dùng innerHTML để hiển thị bold từ markdown
+    document.getElementById('modal-message').innerHTML = message;
     
     const icon = document.getElementById('modal-icon');
     icon.className = 'mx-auto flex items-center justify-center h-12 w-12 rounded-full text-3xl';
@@ -596,7 +231,6 @@ function launchFireworks() {
     setTimeout(() => container.classList.add('hidden'), 4000);
 }
 
-
 function updateDashboard() {
     const weeklyData = {};
     
@@ -606,7 +240,7 @@ function updateDashboard() {
             bottles: 0,
             cans: 0,
             paper: 0,
-            days: [0, 0, 0, 0, 0, 0, 0] // T2 -> CN
+            days: [0, 0, 0, 0, 0, 0, 0]
         };
     });
     
@@ -619,7 +253,7 @@ function updateDashboard() {
             
             const logDate = new Date(log.date);
             const dayOfWeek = logDate.getDay();
-            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+            const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
             weeklyData[log.class].days[dayIndex] += log.totalPoints;
         }
     });
@@ -630,7 +264,6 @@ function updateDashboard() {
         ? `<span class="text-2xl">🥇</span><span class="font-bold">${data.mvpLastWeek.class}</span> - ${data.mvpLastWeek.total.toLocaleString()} điểm`
         : `<span class="font-semibold text-gray-500">Chưa có MVP tuần trước.</span>`;
     document.getElementById('mvp-last-week').innerHTML = mvpDisplay;
-
 
     let leaderboardHTML = '';
     sorted.forEach(([cls, stats], idx) => {
@@ -671,7 +304,7 @@ function updateDashboard() {
     const now = new Date();
     const weekStart = new Date(now);
     const day = now.getDay();
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
     weekStart.setDate(diff);
     weekStart.setHours(0, 0, 0, 0);
     
@@ -686,7 +319,6 @@ function updateDashboard() {
     document.getElementById('current-week-range').textContent = 
         `Tuần từ ${formatDate(weekStart)} đến ${formatDate(weekEnd)}/${now.getFullYear()}`;
 }
-
 
 function updateMediaGallery() {
     const mediaLogs = data.logs.filter(log => log.mediaUrl && log.mediaUrl.trim() !== '');
@@ -718,7 +350,7 @@ function updateMediaGallery() {
         } else if (isVideo || log.mediaMime.includes('video/url')) {
              mediaHTML = `<div class="w-full h-48 flex items-center justify-center bg-black text-white p-2">
                             <span class="text-3xl mr-2">▶️</span>
-                            <span>Video đã gửi (Chỉ xem được Object URL hoặc link công khai)</span>
+                            <span>Video đã gửi</span>
                          </div>`;
         } else if (isFileUrl || log.mediaMime.includes('image')) {
             mediaHTML = `<img src="${log.mediaUrl}" alt="Hoạt động ${log.class}" class="w-full h-48 object-cover" onerror="this.src='https://via.placeholder.com/400x300?text=Ảnh+không+tải+được'"/>`;
@@ -738,9 +370,6 @@ function updateMediaGallery() {
                     <p class="text-sm text-green-600 font-semibold mt-2">
                         ✅ ${log.totalPoints.toLocaleString()} điểm
                     </p>
-                    ${data.loggedInUser === 'admin' ? 
-                        `<p class="text-xs text-red-500 break-all mt-2">Link Gốc (Admin): <a href="${log.mediaUrl}" target="_blank" class="text-blue-500 hover:underline">${log.mediaUrl.substring(0, Math.min(log.mediaUrl.length, 30))}...</a></p>` 
-                        : ''}
                 </div>
             </div>
         `;

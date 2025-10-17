@@ -7,63 +7,63 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
-/* ... GIỮ NGUYÊN PHẦN STYLE CŨ ... */
 body { font-family: 'Inter', sans-serif; }
 .tab-btn { transition: all 0.2s; }
 .leaderboard-container { max-height: 400px; overflow-y: auto; }
 .day-header {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-    padding: 8px 4px;
-    width: 30px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    padding: 8px 4px;
+    width: 30px;
 }
 #fireworks-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 60;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 60;
 }
 .firework {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background: var(--firework-color);
-    border-radius: 50%;
-    bottom: 0;
-    opacity: 0;
-    transform: translateY(0);
-    animation: launch 3s ease-in-out forwards;
-    box-shadow: 0 0 10px var(--firework-color), 0 0 20px var(--firework-color);
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: var(--firework-color);
+    border-radius: 50%;
+    bottom: 0;
+    opacity: 0;
+    transform: translateY(0);
+    animation: launch 3s ease-in-out forwards;
+    box-shadow: 0 0 10px var(--firework-color), 0 0 20px var(--firework-color);
 }
 @keyframes launch {
-    0% { opacity: 1; transform: translateY(0) scale(1); }
-    10% { opacity: 1; transform: translateY(-50vh) scale(1.2); }
-    20% { opacity: 1; transform: translateY(-80vh) scale(1.5); box-shadow: 0 0 15px var(--firework-color), 0 0 30px var(--firework-color); }
-    30% { opacity: 0; transform: translateY(-80vh) scale(1.5); }
-    31% { opacity: 1; transform: translateY(-80vh) scale(0); width: 50px; height: 50px; box-shadow: none; }
-    100% { opacity: 0; transform: translateY(-80vh) scale(3); box-shadow: 0 0 10px var(--firework-color), 0 0 20px var(--firework-color); }
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    10% { opacity: 1; transform: translateY(-50vh) scale(1.2); }
+    20% { opacity: 1; transform: translateY(-80vh) scale(1.5); box-shadow: 0 0 15px var(--firework-color), 0 0 30px var(--firework-color); }
+    30% { opacity: 0; transform: translateY(-80vh) scale(1.5); }
+    31% { opacity: 1; transform: translateY(-80vh) scale(0); width: 50px; height: 50px; box-shadow: none; }
+    100% { opacity: 0; transform: translateY(-80vh) scale(3); box-shadow: 0 0 10px var(--firework-color), 0 0 20px var(--firework-color); }
 }
 .firework::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(circle, #fff 10%, transparent 70%);
-    animation: sparkle 0.3s infinite alternate;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, #fff 10%, transparent 70%);
+    animation: sparkle 0.3s infinite alternate;
 }
 @keyframes sparkle {
-    from { transform: scale(1); opacity: 1; }
-    to { transform: scale(0.5); opacity: 0.8; }
+    from { transform: scale(1); opacity: 1; }
+    to { transform: scale(0.5); opacity: 0.8; }
 }
 </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 <div class="hidden" id="fireworks-container"></div>
 
+<!-- Modal -->
 <div id="my-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
 <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -84,6 +84,8 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 </div>
+
+<div class="container mx-auto px-4 py-8">
 <header class="text-center mb-8">
     <div class="flex items-center justify-center space-x-4">
         <div class="h-20 w-20 flex items-center justify-center">
@@ -91,6 +93,7 @@ body { font-family: 'Inter', sans-serif; }
                 src="your_school_logo.png" 
                 alt="Logo Trường Của Bạn" 
                 class="w-full h-full object-contain" 
+                onerror="this.style.display='none'"
             />
         </div>
         <div>
@@ -99,233 +102,53 @@ body { font-family: 'Inter', sans-serif; }
             <p class="text-lg text-gray-500 mt-2 font-medium">HỆ THỐNG THEO DÕI PHÂN LOẠI RÁC</p>
         </div>
     </div>
-    </header>
-<div class="flex justify-center items-center mt-2 space-x-4">
-    <p class="text-sm text-blue-500 font-medium" id="app-status">Hệ thống đang hoạt động 🎉</p>
-    <div id="auth-status-display" class="text-sm">
-        <span id="logged-in-user" class="text-green-600 font-bold hidden"></span>
-        <button id="logout-btn" class="text-red-500 hover:text-red-700 font-semibold hidden" onclick="logout()">[Đăng Xuất]</button>
-    </div>
-</div>
+    
+    <div class="flex justify-center items-center mt-4">
+        <p class="text-sm text-blue-500 font-medium" id="app-status">Hệ thống đang hoạt động 🎉</p>
+    </div>
 </header>
 
+<!-- Navigation Tabs -->
 <div class="flex justify-center mb-8 space-x-4 flex-wrap">
-<button class="tab-btn bg-green-700 text-white px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1" onclick="switchView('auth-view')">🔑 1. Đăng Nhập</button>
-<button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1 hidden" id="admin-tab-btn" onclick="checkAuthAndSwitchView('admin-view')">⚙️ Admin</button>
-<button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1 hidden" id="input-tab-btn" onclick="checkAuthAndSwitchView('input-view')">♻️ 2. Nhập Liệu Rác</button>
-<button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1" onclick="switchView('dashboard-view')">📊 3. Bảng Xếp Hạng</button>
-<button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1" onclick="switchView('media-view')">📸 4. Kỷ Niệm Xanh</button>
+<button class="tab-btn bg-green-700 text-white px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1" onclick="switchView('input-view')">♻️ 1. Nhập Liệu Rác</button>
+<button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1" onclick="switchView('dashboard-view')">📊 2. Bảng Xếp Hạng</button>
+<button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-full shadow-lg font-semibold text-sm transition-transform hover:scale-105 my-1" onclick="switchView('media-view')">📸 3. Kỷ Niệm Xanh</button>
 </div>
 
-<div class="app-view" id="auth-view">
-    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-md mx-auto border-t-4 border-blue-500">
-        <h2 class="text-2xl font-bold text-blue-700 mb-4 text-center" id="auth-title">Đăng Nhập Hệ Thống</h2>
-        <p class="text-sm text-gray-500 mb-6 text-center">Chọn Tên Lớp hoặc nhập **admin** (nếu là quản trị viên).</p>
-
-        <form class="space-y-4" id="login-form">
-            <label class="block">
-                <span class="text-gray-700 font-medium flex items-center">🏫 Tên Lớp / Admin</span>
-                <select class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2" id="login-class-select">
-                    <option value="admin">Quản trị viên (admin)</option>
-                    <option>10A1</option>
-                    <option>10A2</option>
-                    <option>10A3</option>
-                    <option>10A4</option>
-                    <option>10A5</option>
-                    <option>10A6</option>
-                    <option>11A1</option>
-                    <option>11A2</option>
-                    <option>11A3</option>
-                    <option>11A4</option>
-                    <option>11A5</option>
-                    <option>11A6</option>
-                    <option>12A1</option>
-                    <option>12A2</option>
-                    <option>12A3</option>
-                    <option>12A4</option>
-                    <option>12A5</option>
-                    <option>12A6</option>
-                </select>
-            </label>
-            <label class="block">
-                <span class="text-gray-700 font-medium flex items-center">🔒 Mật khẩu</span>
-                <input type="password" placeholder="Nhập mật khẩu" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2" id="login-password"/>
-            </label>
-
-            <button type="button" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-blue-700 transition-colors mt-6 text-lg transform hover:scale-[1.02] active:scale-100" id="auth-submit-btn" onclick="processAuth()">ĐĂNG NHẬP</button>
-        </form>
-        
-        <div class="mt-4 text-center">
-            <button class="text-blue-500 text-sm hover:text-blue-700" onclick="toggleAuthMode()">
-                <span id="auth-toggle-text">Chưa có tài khoản lớp? **Đăng Ký** tại đây.</span>
-            </button>
-        </div>
-
-        <div class="mt-4 pt-4 border-t border-gray-200 text-center" id="forgot-pass-section">
-            <button class="text-red-500 text-sm hover:text-red-700" onclick="switchView('reset-view')">
-                ❓ Quên Mật Khẩu? (Dùng mã Admin cấp)
-            </button>
-        </div>
-    </div>
-</div>
-
-<div class="app-view hidden" id="reset-view">
-    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-md mx-auto border-t-4 border-red-500">
-        <h2 class="text-2xl font-bold text-red-700 mb-4 text-center">🔑 Khôi Phục Mật Khẩu</h2>
-        <p class="text-sm text-gray-500 mb-6 text-center">Vui lòng nhập Mã xác nhận do Quản trị viên cung cấp.</p>
-
-        <form class="space-y-4">
-            <label class="block">
-                <span class="text-gray-700 font-medium">🏫 Tên Lớp</span>
-                <select class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2" id="reset-class-select-user">
-                    <option value="" disabled selected>Chọn lớp của bạn</option>
-                    <option>10A1</option>
-                    <option>10A2</option>
-                    <option>10A3</option>
-                    <option>10A4</option>
-                    <option>10A5</option>
-                    <option>10A6</option>
-                    <option>11A1</option>
-                    <option>11A2</option>
-                    <option>11A3</option>
-                    <option>11A4</option>
-                    <option>11A5</option>
-                    <option>11A6</option>
-                    <option>12A1</option>
-                    <option>12A2</option>
-                    <option>12A3</option>
-                    <option>12A4</option>
-                    <option>12A5</option>
-                    <option>12A6</option>
-                </select>
-            </label>
-            <label class="block">
-                <span class="text-gray-700 font-medium"># Mã Xác Nhận (6 chữ số)</span>
-                <input type="text" placeholder="Nhập mã xác nhận (Ví dụ: 123456)" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2" id="reset-code"/>
-            </label>
-             <label class="block">
-                <span class="text-gray-700 font-medium">🔒 Mật khẩu Mới</span>
-                <input type="password" placeholder="Nhập mật khẩu mới" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2" id="reset-new-password"/>
-            </label>
-
-            <button type="button" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-red-700 transition-colors mt-6 text-lg" onclick="handlePasswordReset()">ĐẶT LẠI MẬT KHẨU</button>
-            <button type="button" class="w-full bg-gray-400 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-gray-500 transition-colors mt-2 text-lg" onclick="switchView('auth-view')">Quay lại Đăng nhập</button>
-        </form>
-    </div>
-</div>
-
-<div class="app-view hidden" id="profile-view">
-    <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg mx-auto border-t-4 border-blue-500">
-        <h2 class="text-3xl font-extrabold text-blue-700 mb-6 text-center flex items-center justify-center space-x-2">
-            <span>👤</span>
-            <span>TRANG CÁ NHÂN LỚP</span>
-        </h2>
-
-        <div class="bg-gray-50 p-5 rounded-lg mb-6 border border-gray-200">
-            <h3 class="text-xl font-bold text-gray-700 mb-3 flex items-center space-x-2">
-                <span>📧</span><span>Liên Kết Email Lớp</span>
-            </h3>
-            <p class="text-sm text-gray-500 mb-4">Email này được dùng để gửi mã xác nhận reset mật khẩu (cần Backend).</p>
-            
-            <label class="block mb-2">
-                <span class="text-gray-700 text-sm font-medium">Email hiện tại:</span>
-                <input type="email" placeholder="Nhập email của lớp (VD: 10a1@school.edu.vn)" class="mt-1 block w-full rounded-lg border-gray-300 p-2" id="profile-email-input"/>
-            </label>
-            <button onclick="updateProfile('email')" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors mt-3">
-                CẬP NHẬT EMAIL BẢO MẬT
-            </button>
-        </div>
-
-        <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
-            <h3 class="text-xl font-bold text-gray-700 mb-3 flex items-center space-x-2">
-                <span>🔒</span><span>Đổi Mật Khẩu</span>
-            </h3>
-            
-            <label class="block mb-2">
-                <span class="text-gray-700 text-sm font-medium">Mật khẩu Cũ</span>
-                <input type="password" class="mt-1 block w-full rounded-lg border-gray-300 p-2" id="profile-old-password"/>
-            </label>
-            <label class="block mb-2">
-                <span class="text-gray-700 text-sm font-medium">Mật khẩu Mới</span>
-                <input type="password" class="mt-1 block w-full rounded-lg border-gray-300 p-2" id="profile-new-password"/>
-            </label>
-            <label class="block mb-2">
-                <span class="text-gray-700 text-sm font-medium">Xác nhận Mật khẩu Mới</span>
-                <input type="password" class="mt-1 block w-full rounded-lg border-gray-300 p-2" id="profile-confirm-password"/>
-            </label>
-            
-            <button onclick="updateProfile('password')" class="w-full bg-green-600 text-white font-semibold py-2 rounded-lg hover:bg-green-700 transition-colors mt-4">
-                ĐỔI MẬT KHẨU
-            </button>
-        </div>
-    </div>
-</div>
-<div class="app-view hidden" id="admin-view">
-    <div class="bg-white p-6 rounded-xl shadow-2xl mx-auto border-t-4 border-red-500">
-        <h2 class="text-3xl font-extrabold text-red-700 mb-6 text-center flex items-center justify-center space-x-2">
-            <span>⚙️</span>
-            <span>ADMIN CONTROL PANEL</span>
-        </h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-                        <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                <h3 class="text-xl font-bold text-gray-700 mb-3 flex items-center space-x-2"><span class="text-2xl">🗑️</span><span>Quản lý Dữ liệu</span></h3>
-                <p class="text-sm text-gray-500 mb-4">Tổng số mục nhập rác hiện tại: <span id="admin-log-count" class="font-bold text-red-500">0</span></p>
-
-                <button onclick="resetData('weekly')" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors mb-3">
-                    🔄 RESET ĐIỂM TUẦN (Mục thủ công)
-                </button>
-                <p class="text-xs text-blue-700 mb-4 text-center">Tự động reset sẽ chạy vào 0h00 Chủ nhật hàng tuần.</p>
-                
-                <button onclick="resetData('all')" class="w-full bg-red-600 text-white font-semibold py-2 rounded-lg hover:bg-red-700 transition-colors">
-                    🚨 RESET TẤT CẢ DỮ LIỆU (NGUY HIỂM)
-                </button>
-                <p class="text-xs text-red-700 mt-1 text-center">Xóa sạch toàn bộ lịch sử và MVP.</p>
-            </div>
-
-                        <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
-                <h3 class="text-xl font-bold text-gray-700 mb-3 flex items-center space-x-2"><span class="text-2xl">👥</span><span>Quản lý Tài khoản & Reset</span></h3>
-                <p class="text-sm text-gray-500 mb-4">Tổng số tài khoản lớp: <span id="admin-user-count" class="font-bold text-gray-700">0</span></p>
-
-                <label class="block mb-2">
-                    <span class="text-gray-700 text-sm">Chọn Lớp cần cấp mã Reset:</span>
-                    <select id="reset-class-select" class="mt-1 block w-full rounded-lg border-gray-300 p-2"></select>
-                </label>
-                
-                <button onclick="generateResetCode()" class="w-full bg-yellow-600 text-white font-semibold py-2 rounded-lg hover:bg-yellow-700 transition-colors mb-2">
-                    🔑 TẠO VÀ CẤP MÃ RESET (Mô phỏng Email)
-                </button>
-                
-                <p class="text-sm text-red-600 font-bold mb-2 text-center">Mã hiện tại: <span id="admin-reset-code-display" class="text-2xl">N/A</span></p>
-                <p class="text-xs text-gray-500 text-center">Mã chỉ có hiệu lực trong 10 phút (mô phỏng).</p>
-
-            </div>
-        </div>
-
-        <div class="mt-8 border-t pt-6">
-            <h3 class="text-xl font-bold text-gray-700 mb-3 flex items-center space-x-2"><span class="text-2xl">🏆</span><span>Quản lý MVP</span></h3>
-            <div id="admin-mvp-list" class="space-y-2">
-                <p class="text-sm text-gray-500">MVP Tuần Trước: <span id="mvp-last-week-display" class="font-bold text-green-600">N/A</span></p>
-                <p class="text-sm text-gray-500">MVP Của Tháng: <span id="mvp-monthly-display" class="font-bold text-yellow-600">N/A</span></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="app-view hidden" id="input-view">
+<!-- View: Input Form -->
+<div class="app-view" id="input-view">
 <div class="bg-white p-6 rounded-xl shadow-2xl max-w-lg mx-auto border-t-4 border-green-500">
 <h2 class="text-2xl font-bold text-green-700 mb-4 text-center flex items-center justify-center space-x-2">
 <span class="text-3xl">🗑️</span>
 <span>Ghi Nhận Tái Chế</span>
 </h2>
 <p class="text-sm text-green-500 mb-2 text-center font-bold">Hệ thống tính điểm: 1ml thể tích hoặc 1 gram trọng lượng = 1 điểm</p>
-<p class="text-sm text-gray-500 mb-6 text-center">🌟 Vui lòng nhập chi tiết rác đã phân loại vào giỏ.</p>
+<p class="text-sm text-gray-500 mb-6 text-center">🌟 Vui lòng nhập chi tiết rác đã phân loại vào giờ.</p>
 <form class="space-y-4" id="input-form">
 <div class="grid grid-cols-2 gap-4">
 <label class="block">
-<span class="text-gray-700 font-medium flex items-center"><span class="text-xl mr-1">🏫</span> Lớp Ghi Nhận (Tự động)</span>
-<input type="text" readonly class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm p-2 bg-gray-100 font-bold text-green-700" id="class-display"/>
+<span class="text-gray-700 font-medium flex items-center"><span class="text-xl mr-1">🏫</span> Chọn Lớp</span>
+<select class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring focus:ring-green-500 focus:ring-opacity-50 p-2" id="class-select">
+    <option value="">-- Chọn lớp --</option>
+    <option>10A1</option>
+    <option>10A2</option>
+    <option>10A3</option>
+    <option>10A4</option>
+    <option>10A5</option>
+    <option>10A6</option>
+    <option>11A1</option>
+    <option>11A2</option>
+    <option>11A3</option>
+    <option>11A4</option>
+    <option>11A5</option>
+    <option>11A6</option>
+    <option>12A1</option>
+    <option>12A2</option>
+    <option>12A3</option>
+    <option>12A4</option>
+    <option>12A5</option>
+    <option>12A6</option>
+</select>
 </label>
 <label class="block">
 <span class="text-gray-700 font-medium flex items-center"><span class="text-xl mr-1">🗓️</span> Chọn Ngày Ghi Nhận</span>
@@ -376,20 +199,20 @@ body { font-family: 'Inter', sans-serif; }
 
 <div class="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-lg mt-4">
 <p class="text-sm text-blue-800 font-semibold">ℹ️ Lưu ý về Tải ảnh:</p>
-<p class="text-xs text-blue-700">Nếu bạn dùng link Drive, Admin sẽ cần xác nhận thủ công link đó.</p>
+<p class="text-xs text-blue-700">Nếu bạn dùng link Drive, hãy đảm bảo link có thể truy cập công khai.</p>
 </div>
-
 
 <button type="button" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-green-700 transition-colors mt-6 text-lg transform hover:scale-[1.02] active:scale-100" onclick="logRecycling()">🎉 GỬI DỮ LIỆU & XÁC NHẬN 🎉</button>
 </form>
 </div>
 </div>
 
+<!-- View: Dashboard -->
 <div class="app-view hidden" id="dashboard-view">
 <div class="bg-white p-6 rounded-xl shadow-2xl border-t-4 border-green-500">
 <h2 class="text-3xl font-extrabold text-green-700 mb-2 text-center flex items-center justify-center space-x-2">
 <span class="text-3xl">🏆</span>
-<span>BẢNG XẾP HẠNG TUẦN</span>
+<span>BẢNG XÉP HẠNG TUẦN</span>
 </h2>
 <p class="text-md font-medium text-gray-500 mb-6 text-center" id="current-week-range">Tuần 1-7 tháng 10, 2025</p>
 
@@ -444,6 +267,7 @@ body { font-family: 'Inter', sans-serif; }
 </div>
 </div>
 
+<!-- View: Media Gallery -->
 <div class="app-view hidden" id="media-view">
 <div class="bg-white p-6 rounded-xl shadow-2xl border-t-4 border-green-500">
 <h2 class="text-3xl font-extrabold text-green-700 mb-6 text-center flex items-center justify-center space-x-2">
